@@ -22,3 +22,4 @@ With [solver.py](solver.py), you can see how the computer takes "the best" appro
 - [Multiprocessing in Python: Process Communication - LucidProgramming](https://www.youtube.com/watch?v=TQx3IfCVvQ0)
 - [Jonathan Olsen's take on the optimal opener](http://jonathanolson.net/experiments/optimal-wordle-solutions)
 - [Jonathan Olsen's Wordle Solver](https://jonathanolson.net/wordle-solver/)
+- [Unicode Characters Used](https://en.wikipedia.org/wiki/List_of_Unicode_characters)
