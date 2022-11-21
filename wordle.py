@@ -36,5 +36,7 @@ while guess != response:
     else:
         print('\n')
     guess = new_guess()
+else:
+    print('✓ ✓ ✓ ✓ ✓')
 
 print()
