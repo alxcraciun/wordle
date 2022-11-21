@@ -20,3 +20,5 @@ With [solver.py](solver.py), you can see how the computer takes "the best" appro
 - [Solving Wordle using information theory - 3Blue1Brown](https://www.youtube.com/watch?v=v68zYyaEmEA)
 - [Buggy Behaviour vs Official Wordle Rules - 3Blue1Brown](https://www.youtube.com/watch?v=fRed0Xmc2Wg)
 - [Multiprocessing in Python: Process Communication - LucidProgramming](https://www.youtube.com/watch?v=TQx3IfCVvQ0)
+- [Jonathan Olsen's take on the optimal opener](http://jonathanolson.net/experiments/optimal-wordle-solutions)
+- [Jonathan Olsen's Wordle Solver](https://jonathanolson.net/wordle-solver/)
