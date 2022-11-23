@@ -23,3 +23,4 @@ With [solver.py](solver.py), you can see how the computer takes "the best" appro
 - [Jonathan Olsen's take on the optimal opener](http://jonathanolson.net/experiments/optimal-wordle-solutions)
 - [Jonathan Olsen's Wordle Solver](https://jonathanolson.net/wordle-solver/)
 - [Unicode Characters Used](https://en.wikipedia.org/wiki/List_of_Unicode_characters)
+- [Schita proiectului (In Romanian)](https://docs.google.com/document/d/1NkDMdvkvUxzifMKFTC20WpCbaavfuQojjCkXVaMrbAo)
