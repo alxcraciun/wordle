@@ -12,6 +12,7 @@ With [solver.py](solver.py), you can see how the computer takes "the best" appro
 
 ### Team Members:
 - Crăciun Alexandru-Emilian, Group 134
+- Negrescu Theodor, Group 151
 
 <br>
 
