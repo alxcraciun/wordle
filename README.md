@@ -24,4 +24,12 @@ With [solver.py](solver.py), you can see how the computer takes "the best" appro
 - [Jonathan Olsen's take on the optimal opener](http://jonathanolson.net/experiments/optimal-wordle-solutions)
 - [Jonathan Olsen's Wordle Solver](https://jonathanolson.net/wordle-solver/)
 - [Unicode Characters Used](https://en.wikipedia.org/wiki/List_of_Unicode_characters)
-- [Schita proiectului (In Romanian)](https://docs.google.com/document/d/1NkDMdvkvUxzifMKFTC20WpCbaavfuQojjCkXVaMrbAo)
+- [Project Scheme (In Romanian)](https://docs.google.com/document/d/1NkDMdvkvUxzifMKFTC20WpCbaavfuQojjCkXVaMrbAo)
+
+<br>
+
+### GUI Documentation
+- [Figma Interface Prototype](https://www.figma.com/file/s2QuaHRBiullAksc0ly5Rp/Wordle?node-id=3%3A2&t=IaWParr0uRquOZyO-1)
+- [Tkinter Documentation](https://docs.python.org/3/library/tkinter.html?highlight=tkinter#module-tkinter)
+- [Tkinter-Figma Connection](https://github.com/ParthJadhav/Tkinter-Designer)
+- [Tkinter Course - Youtube](https://www.youtube.com/watch?v=YXPyB4XeYLA&t=2022s)
