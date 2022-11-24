@@ -1,21 +1,46 @@
-import os, sys, constants, math, functools, itertools
+import os, sys, constants, math, functools, dataclasses
 
 dict = []
 
+try:
+    with open(os.path.join(sys.path[0], constants.DICT)) as file:
+        dict = tuple(file.read().split())
+except FileNotFoundError:
+    print(f"ERROR: {constants.DICT} not found", file=sys.stderr)
+    sys.exit(constants.ERROR_FILE_NOT_FOUND)
+
 cache_table = [0] * (391)
+cache_dict = {}
 
-def filter_by_match(match_code, match_pos, match_char):
-    hash = (ord(match_char) - ord('A')) + match_pos * 26 + 26 * 5 * match_code
+@dataclasses.dataclass(frozen=True)
+class MatchSet:
+    hashes: tuple[int]
+    matches: set[str]
+
+@dataclasses.dataclass(frozen=True)
+class MatchInfo:
+    code: int
+    pos: int
+    char: str
+
+def get_match_hash(match : MatchInfo):
+    return (ord(match.char) - ord('A')) + ((match.pos * 26) if match.code != 0 else 0) + 26 * 5 * match.code
+
+def merge_hash_tuples(l1 : tuple[int], l2 : tuple[int]):
+    return tuple(sorted(l1 + l2))
+
+def filter_by_match(match : MatchInfo):
+    hash = get_match_hash(match)
     if cache_table[hash] == 0:
-        if match_code == constants.FULL_MATCH:
-            cache_table[hash] = {x for x in dict if x[match_pos] == match_char}
-        elif match_code == constants.PARTIAL_MATCH:
-            cache_table[hash] = {x for x in dict if x[match_pos] != match_char and match_char in x}
+        if match.code == constants.FULL_MATCH:
+            cache_table[hash] = {x for x in dict if x[match.pos] == match.char}
+        elif match.code == constants.PARTIAL_MATCH:
+            cache_table[hash] = {x for x in dict if x[match.pos] != match.char and match.char in x}
         else:
-            cache_table[hash] = {x for x in dict if match_char not in x}
-    return [hash], cache_table[hash]
+            cache_table[hash] = {x for x in dict if match.char not in x}
+    return cache_table[hash]
 
-def get_match_info(guess, answer):
+def get_match_info(guess : str, answer : str):
     def letter_info(pos):
         if guess[pos] == answer[pos]:
             return constants.FULL_MATCH
@@ -23,43 +48,47 @@ def get_match_info(guess, answer):
             return constants.PARTIAL_MATCH
         else:
             return constants.NO_MATCH
-    return [(letter_info(pos), pos) for pos in range(len(guess))]
+    return [MatchInfo(letter_info(pos), pos, guess[pos]) for pos in range(len(guess))]
 
-cache_dict = {}
+def reduce_sets(s1 : MatchSet, s2 : MatchSet):
+    hash = merge_hash_tuples(s1.hashes, s2.hashes)
+    if cache_dict.get(hash) == None:
+        cache_dict[hash] = s1.matches & s2.matches
+    return MatchSet(hash, cache_dict[hash])
 
-def set_int(sa : tuple[tuple[int], set], sb: tuple[tuple[int], set]):
-    hash = tuple(sorted(set(sa[0] + sb[0])))
-    if cache_dict.get(hash, None) == None:
-        cache_dict[hash] = (list(hash), sa[1] & sb[1])
-    return cache_dict[hash]    
+def get_match_space(matches : list[MatchInfo]):
+    sets : list[MatchSet] = [MatchSet((get_match_hash(m),), filter_by_match(m)) for m in matches]
+    return functools.reduce(reduce_sets, sets).matches
 
-def calculate_entropy(guess):
+def calculate_entropy(guess : str, prev_info: list[MatchInfo] = []):
+    #TODO: WORDS AFTER OPENER NOT IMPLEMENTED YET
     entropy = 0
     for answer in dict:
-        match = sorted(get_match_info(guess, answer), reverse=True)
-        match_lists = [filter_by_match(match_code, match_pos if match_code != 0 else 0, guess[match_pos]) for match_code, match_pos in match]
-        match_space = functools.reduce(set_int, match_lists)[1]
+        match = sorted(get_match_info(guess, answer), reverse=True, key=lambda x : x.code)
+        match_space = get_match_space(match)
         information = math.log2(len(dict) / len(match_space))
         entropy += information
     entropy /= len(dict)
     return entropy
 
-def main():
-    global dict
-    try:
-        with open(os.path.join(sys.path[0], constants.DICT)) as file:
-            dict = file.read().split()
-    except FileNotFoundError:
-        print(f"{constants.DICT} not found")
-        sys.exit(2)
-    filter_by_match.dict = dict
+def calculate_opener():
+    print("Calculating wordle opener entropies...")
+    print("Using PyPy is recommended...")
     entropy_values = [0] * len(dict)
-    cache = 0
     for i in range(len(dict)):
         entropy_values[i] = calculate_entropy(dict[i])
         if not(i%100):
-            print(f"{i/len(dict) * 100}%", file=sys.stderr, flush=True)
-    print(entropy_values, sep='\n')
+            print(f"{(i+1)/len(dict) * 100}%", flush=True)
+    with open("entropii.txt", mode='w') as file:
+        for val in zip(entropy_values, dict):
+            print(f"{val[1]} -> {val[0]}", file=file)
+    with open("entropii_sortate.txt", mode='w') as file:
+        for val in sorted(zip(entropy_values, dict), reverse=True):
+            print(f"{val[1]} -> {val[0]}", file=file)
+
+def main():
+    calculate_opener()
+    #TODO: IPC NOT IMPLEMENTED YET
 
 
 if __name__ == "__main__":
