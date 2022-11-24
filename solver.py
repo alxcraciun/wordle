@@ -9,21 +9,21 @@ except FileNotFoundError:
     print(f"ERROR: {constants.DICT} not found", file=sys.stderr)
     sys.exit(constants.ERROR_FILE_NOT_FOUND)
 
-cache_table = [0] * (391)
+cache_table = [0] * (391)   # stocheaza cele 26 litere * 5 pozitii posibile * 3 variante culori
 cache_dict = {}
 
 @dataclasses.dataclass(frozen=True)
-class MatchSet:
-    hashes: tuple[int]
-    matches: set[str]
+class MatchSet:            
+    hashes: tuple[int]      # hashurile seturilor care au fost intersectate
+    matches: set[str]       # setul de cuvinte care au fost intersectate
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)     # frozen o face imutabila
 class MatchInfo:
-    code: int
-    pos: int
-    char: str
+    code: int       # 0, 1, 2 pt o culoare
+    pos: int        # pozitia pe care e culoarea
+    char: str       # litera cu care avem acea culoare
 
-def get_match_hash(match : MatchInfo):
+def get_match_hash(match : MatchInfo):      # converteste structura MatchInfo intr-un hash 
     return (ord(match.char) - ord('A')) + ((match.pos * 26) if match.code != 0 else 0) + 26 * 5 * match.code
 
 def merge_hash_tuples(l1 : tuple[int], l2 : tuple[int]):
@@ -43,17 +43,17 @@ def filter_by_match(match : MatchInfo):
 def get_match_info(guess : str, answer : str):
     def letter_info(pos):
         if guess[pos] == answer[pos]:
-            return constants.FULL_MATCH
+            return constants.FULL_MATCH     # 2 - litera e verde
         elif guess[pos] in answer:
-            return constants.PARTIAL_MATCH
+            return constants.PARTIAL_MATCH  # 1 - litera e galbena
         else:
-            return constants.NO_MATCH
+            return constants.NO_MATCH       # 0 - litera e rosie
     return [MatchInfo(letter_info(pos), pos, guess[pos]) for pos in range(len(guess))]
 
 def reduce_sets(s1 : MatchSet, s2 : MatchSet):
     hash = merge_hash_tuples(s1.hashes, s2.hashes)
     if cache_dict.get(hash) == None:
-        cache_dict[hash] = s1.matches & s2.matches
+        cache_dict[hash] = s1.matches & s2.matches   # intersectia de set-uri
     return MatchSet(hash, cache_dict[hash])
 
 def get_match_space(matches : list[MatchInfo]):
@@ -64,11 +64,11 @@ def calculate_entropy(guess : str, prev_info: list[MatchInfo] = []):
     #TODO: WORDS AFTER OPENER NOT IMPLEMENTED YET
     entropy = 0
     for answer in database:
-        match = sorted(get_match_info(guess, answer), reverse=True, key=lambda x : x.code)
+        match = sorted(get_match_info(guess, answer), reverse=True, key=lambda x : x.code)      # incep cu literele verzi
         match_space = get_match_space(match)
-        information = math.log2(len(database) / len(match_space))
-        entropy += information
-    entropy /= len(database)
+        information = math.log2(len(database) / len(match_space))       # informatie primita datorita cuvantului
+        entropy += information      # formula entropiei
+    entropy /= len(database)        # deoarece probabilitatile cuvintelor sunt egale
     return entropy
 
 def calculate_opener():
