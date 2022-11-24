@@ -1,4 +1,4 @@
-import os, sys, constants, math, functools, dataclasses
+import os, sys, constants, math, functools, dataclasses, argparse
 
 dict = []
 
@@ -72,7 +72,7 @@ def calculate_entropy(guess : str, prev_info: list[MatchInfo] = []):
     return entropy
 
 def calculate_opener():
-    print("Calculating wordle opener entropies...")
+    print("Calculating Wordle opener entropies...")
     print("Using PyPy is recommended...")
     entropy_values = [0] * len(dict)
     for i in range(len(dict)):
@@ -87,7 +87,12 @@ def calculate_opener():
             print(f"{val[1]} -> {val[0]}", file=file)
 
 def main():
-    calculate_opener()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--openers', action='store_true', help='calculate entropies for all possible openers')
+    args = parser.parse_args()
+    if args.openers:
+        calculate_opener()
+        return
     #TODO: IPC NOT IMPLEMENTED YET
 
 
