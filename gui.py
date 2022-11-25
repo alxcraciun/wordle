@@ -1,5 +1,8 @@
 from tkinter import *
 root = Tk()
+root.geometry('900x600')
+root.resizable(False, False)
+root.title('Wordle')
 
 # Label1 = Label(root, text = 'Wordle Project')
 # Label2 = Label(root, text = 'Please submit your word:').grid(row = 0, column = 10)
