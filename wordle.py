@@ -1,4 +1,5 @@
-import random, sys, queue, argparse, dataclasses, threading, constants, ipc
+import random, sys, queue, argparse, dataclasses, threading, constants, ipc, os
+import gui
 
 database = []
 
@@ -9,13 +10,8 @@ except:
     sys.exit(constants.ERROR_FILE_NOT_FOUND)
 
 @dataclasses.dataclass(frozen=True)
-class TermInput:
+class GUIInput:
     input: str
-
-@dataclasses.dataclass(frozen=True)
-class TermOutput:
-    output: str
-    end: bool
 
 @dataclasses.dataclass(frozen=True)
 class IPCInput:
@@ -41,17 +37,6 @@ def ipc_input_thread():
     except Exception as e:
         ipc.err()
 
-def user_input_thread():
-    if constants.DEBUG_IPC:
-        while True:
-            pass
-    try:
-        while True:
-            word = input()
-            input_queue.put(TermInput(word))
-    except (KeyboardInterrupt, EOFError) as e:
-        return
-
 def get_match_info(guess, answer):
     assert(len(guess) == len(answer))
     def get_letter_info(pos):
@@ -72,6 +57,15 @@ def match_to_unicode(match : list[int]):
     conv = {2:'\u2713',1:'\u2727',0:'\u2717'}
     return "".join([conv[code] for code in match])
 
+def submit(g):
+    input_queue.put(GUIInput(g["collect_guess"]()))
+
+def hint(g):
+    pass
+
+def solve(g):
+    pass
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--secret-word', default=None, type=validate_word)
@@ -82,16 +76,22 @@ def main():
         secret_word = random.choice(database)
     else:
         secret_word = args.secret_word
-    
-    console_reader = threading.Thread(group=None, target=user_input_thread)
-    console_reader.daemon = True
-    console_reader.start()
 
     ipc_reader = threading.Thread(group=None, target=ipc_input_thread)
     ipc_reader.daemon = True
     ipc_reader.start()
 
+
     guess_history = []
+    global update_history
+    update_history = None
+
+    def receive_uh(uh):
+        global update_history
+        update_history = uh
+
+    window = threading.Thread(group=None, target=lambda : gui.start_window(hint, submit, solve, receive_uh))
+    window.start()
 
     while [constants.FULL_MATCH] * 5 not in guess_history:
         msg = input_queue.get()
@@ -99,7 +99,7 @@ def main():
         if isinstance(msg, BaseException):
             raise msg
 
-        elif isinstance(msg, TermInput):
+        elif isinstance(msg, GUIInput):
             guess = msg.input
 
         elif isinstance(msg, IPCInput):
@@ -127,9 +127,10 @@ def main():
             if won:
                 while ipc_reader.is_alive():
                     pass # let IPC finish before exiting
-                
+
         guess_history.append(guess)
         guess_history.append(match)
+        update_history(guess_history)
 
 if __name__ == "__main__":
     main()
