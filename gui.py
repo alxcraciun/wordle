@@ -1,5 +1,5 @@
 from pathlib import Path
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, StringVar
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH.joinpath("assets")
@@ -12,7 +12,7 @@ KEY_IMAGE_COORDS = [(90.5, 273.0), (269.5, 273.0), (448.5, 273.0), (627.5, 273.0
 KEY_ENTRY_COORDS = [(61.0, 223.0), (240.0, 223.0), (419.0, 223.0), (598.0, 223.0), (777.0, 223.0)]
 HISTORY_ENTRY_COORD = [[(816.800048828125, 140.38315963745117), (781.9500350952148, 140.38315963745117), (747.2500228881836, 140.38315963745117), (712.5500106811523, 140.38315963745117), (677.8500003814697, 140.38315963745117), (534.800048828125, 140.38315963745117), (499.95003509521484, 140.38315963745117), (465.2500228881836, 140.38315963745117), (430.55001068115234, 140.38315963745117), (395.8499984741211, 140.38315963745117), (252.800048828125, 140.38315963745117), (217.95004272460938, 140.38315963745117), (183.25003051757812, 140.38315963745117), (148.55001831054688, 140.38315963745117), (113.85000610351562, 140.38315963745117), (816.800048828125, 79.82242965698242), (781.9500350952148, 79.82242965698242), (747.2500228881836, 79.82242965698242), (712.5500106811523, 79.82242965698242), (677.8500003814697, 79.82242965698242), (534.800048828125, 79.82242965698242), (499.95003509521484, 79.82242965698242), (465.2500228881836, 79.82242965698242), (430.55001068115234, 79.82242965698242), (395.8499984741211, 79.82242965698242), (252.800048828125, 79.82242965698242), (217.95004272460938, 79.82242965698242), (183.25003051757812, 79.82242965698242), (148.55001831054688, 79.82242965698242), (113.85000610351562, 79.82242965698242)]]
 
-entry_list = []
+entry_list : list[Entry] = []
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH.joinpath(path)
@@ -25,8 +25,18 @@ def init_image(x, y, path):
 def init_key(x, y, char):
     canvas.create_text(x, y, anchor="nw", text=char, fill="#000000", font=("SFProDisplay Regular", 22 * -1))
 
-def init_entry(x, y):
-    entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font = ('SFProDisplay Regular', 50), justify = 'center')
+def init_entry(x, y, i):
+    def callback(*args):
+        val = sv.get()
+        if len(val) > 1:
+            val = val[0]
+        val = val.upper()
+        sv.set(val)
+        if i < len(entry_list):
+            entry_list[i].focus()
+    sv = StringVar()
+    sv.trace_add("write", callback)
+    entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font = ('SFProDisplay Regular', 50), justify = 'center', textvariable=sv)
     entry.place(x=x, y=y, width=59.0, height=98.0)
     entry_list.append(entry)
 
@@ -58,7 +68,7 @@ for char, coords in zip(LETTERS, LETTER_COORDS):
 
 for i, [img_coords, entry_coords] in enumerate(zip(KEY_IMAGE_COORDS, KEY_ENTRY_COORDS), start=1):
     init_image(*img_coords, relative_to_assets(f"entry.png"))
-    init_entry(*entry_coords)
+    init_entry(*entry_coords, i)
 
 entry_list[0].focus()
 
