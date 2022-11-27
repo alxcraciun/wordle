@@ -55,18 +55,25 @@ def init_entry(x, y, i):
 #        if i > 1 and val == "":
 #            entry_list[i - 2].focus()
         sv.prev_val = sv.get()
+    def keypress_callback(*args):
+        if args[0].keysym == "BackSpace" and i > 1 and sv.get() == "":
+            entry_list[i - 2].focus()
+        elif args[0].keysym == "Return":
+            submit_button.invoke()
     sv = StringVar()
     sv.prev_val = ""
     sv.trace_add("write", callback)
     entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font = ('SFProDisplay Regular', 50), justify = 'center', textvariable=sv)
     entry.place(x=x, y=y, width=59.0, height=98.0)
     entry_list.append(entry)
+    entry.bind("<KeyPress>", keypress_callback)
 
 def init_button(x, y, path, callback):
     button_image = PhotoImage(file=path)
     IMG_REF.append(button_image) # fix garbage collector bug
     button = Button(image=button_image, borderwidth=0, highlightthickness=0, command=callback, relief="flat")
     button.place(x=x, y=y, width=286.5714416503906, height=42.0)
+    return button
 
 def reset_history():
     for e in history_entry_list:
@@ -150,6 +157,7 @@ def start_window(callback_hint = voidfunc, callback_submit = voidfunc, callback_
     global window
     global canvas
     global key_label_list
+    global submit_button, hint_button, solve_button
     callback_init(update_history)
     window = Tk()
 
@@ -163,9 +171,9 @@ def start_window(callback_hint = voidfunc, callback_submit = voidfunc, callback_
     canvas = Canvas(window, bg = "#F1F1F1", height = 600, width = 900, bd = 0, highlightthickness = 0, relief = "ridge")
     canvas.place(x = 0, y = 0)
 
-    init_button(*BUTTON_COORDS[0], relative_to_assets("button_hint.png"), give_globals(callback_hint))
-    init_button(*BUTTON_COORDS[1], relative_to_assets("button_submit.png"), give_globals(callback_submit))
-    init_button(*BUTTON_COORDS[2], relative_to_assets("button_solve.png"), give_globals(callback_solve))
+    hint_button = init_button(*BUTTON_COORDS[0], relative_to_assets("button_hint.png"), give_globals(callback_hint))
+    submit_button = init_button(*BUTTON_COORDS[1], relative_to_assets("button_submit.png"), give_globals(callback_submit))
+    solve_button = init_button(*BUTTON_COORDS[2], relative_to_assets("button_solve.png"), give_globals(callback_solve))
 
     for i, coords in enumerate(IMAGE_COORDS, start=1):
         lbl = init_image(*coords, relative_to_assets("key_large.png" if i < 8 else "key_medium.png" if i < 17 else "key_small.png"))
