@@ -9,6 +9,7 @@ IMG_REF = []
 IMAGE_COORDS = [(825.4693603515625, 509.0), (700.2244873046875, 509.0), (574.9796142578125, 509.0), (449.7347412109375, 509.0), (324.4898376464844, 509.0), (199.24493408203125, 509.0), (74.0, 509.0), (839.3016357421875, 458.0), (741.888916015625, 458.0), (644.4761962890625, 458.0), (547.0634765625, 458.0), (449.65081787109375, 458.0), (352.2381286621094, 458.0), (254.825439453125, 458.0), (157.4127197265625, 458.0), (60.0, 458.0), (844.04296875, 407.0), (756.37158203125, 407.0), (668.7000732421875, 407.0), (581.0286865234375, 407.0), (493.3572082519531, 407.0), (405.6857604980469, 407.0), (318.0143127441406, 407.0), (230.3428955078125, 407.0), (142.67144775390625, 407.0), (55.0, 407.0)]
 LETTER_COORDS = [(67.0, 495.0), (486.3572082519531, 393.0), (192.24493408203125, 495.0), (132.67144775390625, 393.0), (442.7347106933594, 495.0), (573.0286865234375, 393.0), (399.6857604980469, 393.0), (150.4127197265625, 444.0), (311.0143127441406, 393.0), (47.0, 393.0), (838.04296875, 393.0), (748.37158203125, 393.0), (692.2244873046875, 495.0), (816.4693603515625, 495.0), (833.3016357421875, 444.0), (734.888916015625, 444.0), (639.4761962890625, 444.0), (666.7000732421875, 393.0), (539.0634765625, 444.0), (441.65081787109375, 444.0), (346.2381286621094, 444.0), (224.3428955078125, 393.0), (247.825439453125, 444.0), (316.4898376464844, 495.0), (567.9796142578125, 495.0), (53.0, 444.0)]
 LETTERS = ['Z', 'Y', 'X', 'W', 'V', 'U', 'T', 'S', 'R', 'Q', 'P', 'O', 'N', 'M', 'L', 'K', 'J', 'I', 'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A']
+LETTERS_IN_ORDER = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Z', 'X', 'C', 'V', 'B', 'N', 'M']
 BUTTON_COORDS = [(14.0, 539.0), (306.57147216796875, 539.0), (599.1429443359375, 539.0)]
 KEY_IMAGE_COORDS = [(90.5, 273.0), (269.5, 273.0), (448.5, 273.0), (627.5, 273.0), (806.5, 273.0)]
 KEY_ENTRY_COORDS = [(61.0, 223.0), (240.0, 223.0), (419.0, 223.0), (598.0, 223.0), (777.0, 223.0)]
@@ -21,6 +22,8 @@ window = None
 canvas = None
 
 entry_list : list[Entry] = []
+key_label_list : list[Label] = []
+key_text_label_list : list[Label] = []
 history_entry_list : list[Entry] = []
 history_label_list : list[Label] = []
 history_number_list : list[Label] = []
@@ -31,10 +34,14 @@ def relative_to_assets(path: str) -> Path:
 def init_image(x, y, path):
     image_image = PhotoImage(file=path)
     IMG_REF.append(image_image) # fix garbage collector bug
-    canvas.create_image(x, y, image=image_image)
+    entry_label = Label(window, image=image_image, background="#F1F1F1")
+    entry_label.place(x = x, y = y, anchor="center")
+    return entry_label
 
 def init_key(x, y, char):
-    canvas.create_text(x, y, anchor="nw", text=char, fill="#000000", font=("SFProDisplay Regular", 22 * -1))
+    key_text = Label(window, text=char, background="#FFFFFF", foreground="#000000", font=("SFProDisplay Regular", 20 * -1), justify="center")
+    key_text_label_list.append(key_text)
+    key_text.place(x=x,y=y,width=19,height=25,anchor="nw")
 
 def init_entry(x, y, i):
     def callback(*args):
@@ -43,9 +50,13 @@ def init_entry(x, y, i):
             val = val[0]
         val = val.upper()
         sv.set(val)
-        if i < len(entry_list):
+        if i < len(entry_list) and not(sv.prev_val != "" and val == ""):
             entry_list[i].focus()
+#        if i > 1 and val == "":
+#            entry_list[i - 2].focus()
+        sv.prev_val = sv.get()
     sv = StringVar()
+    sv.prev_val = ""
     sv.trace_add("write", callback)
     entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font = ('SFProDisplay Regular', 50), justify = 'center', textvariable=sv)
     entry.place(x=x, y=y, width=59.0, height=98.0)
@@ -110,17 +121,36 @@ def update_history(match_info):
     to_the_left = len(match_info)
     match_info = match_info[-6:]
     to_the_left -= len(match_info)
+    dict_info = dict()
     for word, info in match_info:
         for char, code in (zip(word, info)):
+            if dict_info.get(char, "") != "_green":
+                dict_info[char] = "_green" if code == constants.FULL_MATCH else "_yellow" if code == constants.PARTIAL_MATCH else "_red"
             init_history_letter(j, code, char)
             j -= 1
     for x in range(len(match_info)):
         init_history_number(x, f"#{x + to_the_left + 1}")
+    hex_for_image_types = {"_green":"#DBFFB7", "_yellow":"#FFFA88", "_red":"#FFB7B7", "":"#FFFFFF"}
+    for i, x in enumerate(key_label_list):
+        letter = LETTERS_IN_ORDER[i]
+        default = x.image_type
+        default += dict_info.get(letter, "")
+        default += ".png"
+        correct_image = PhotoImage(file=relative_to_assets(default))
+        IMG_REF.append(correct_image) # fix garbage collector bug
+        x.configure(image=correct_image)
+    for x in key_text_label_list:
+        x.configure(background=hex_for_image_types[dict_info.get(x.cget("text"), "")])
+        
 
-def start_window(callback_hint, callback_submit, callback_solve, callback_init):
-    callback_init(update_history)
+def voidfunc(*args, **kwargs):
+    pass
+
+def start_window(callback_hint = voidfunc, callback_submit = voidfunc, callback_solve = voidfunc, callback_init = voidfunc):
     global window
     global canvas
+    global key_label_list
+    callback_init(update_history)
     window = Tk()
 
     window.title('Ntropy Wordle')
@@ -138,7 +168,10 @@ def start_window(callback_hint, callback_submit, callback_solve, callback_init):
     init_button(*BUTTON_COORDS[2], relative_to_assets("button_solve.png"), give_globals(callback_solve))
 
     for i, coords in enumerate(IMAGE_COORDS, start=1):
-        init_image(*coords, relative_to_assets("key_large.png" if i < 8 else "key_medium.png" if i < 17 else "key_small.png"))
+        lbl = init_image(*coords, relative_to_assets("key_large.png" if i < 8 else "key_medium.png" if i < 17 else "key_small.png"))
+        lbl.image_type = "key_large" if i < 8 else "key_medium" if i < 17 else "key_small"
+        key_label_list.append(lbl)
+    key_label_list = list(reversed(key_label_list))
 
     for char, coords in zip(LETTERS, LETTER_COORDS):
         init_key(*coords, char)
