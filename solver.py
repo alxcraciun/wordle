@@ -130,10 +130,12 @@ def wait_for_command():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--openers', action='store_true', help='calculate entropies for all possible openers')
+    parser.add_argument('--port', default=constants.PORT, help='port to use for IPC')
     args = parser.parse_args()
     if args.openers:
         calculate_opener()
         return
+    ipc.set_port(args.port)
     while True:
         wait_for_command()
         ipc.write("LIST")
@@ -146,7 +148,6 @@ def main():
             return
         elif result != "OK":
             ipc.err()
-
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,11 @@
 import sys, os, constants, traceback
 
+port = constants.PORT
+
+def set_port(p):
+    global port
+    port = p
+
 def err():
     print("IPC ERROR")
     write("ERR", 100, False)
@@ -29,14 +35,14 @@ else:
                 self.wfile.write(b"")
             def log_message(self, format: str, *args) -> None:
                 return
-        svr = server.HTTPServer(('localhost', constants.PORT), RequestHandler)
+        svr = server.HTTPServer(('localhost', int(port)), RequestHandler)
         svr.handle_request()
         svr.server_close()
         return data[0].decode("utf-8")
     def write(msg, timeout=1, retry=True):
         while True:
             try:
-                c = client.HTTPConnection(f"localhost:{constants.PORT}", timeout=timeout)
+                c = client.HTTPConnection(f"localhost:{port}", timeout=timeout)
                 c.request("POST", "/", msg.encode("utf-8"))
                 r = c.getresponse()
                 c.close()

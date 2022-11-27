@@ -50,7 +50,7 @@ def user_input_thread():
             word = input()
             input_queue.put(TermInput(word))
     except (KeyboardInterrupt, EOFError) as e:
-        input_queue.put(e)
+        return
 
 def get_match_info(guess, answer):
     assert(len(guess) == len(answer))
@@ -75,24 +75,33 @@ def match_to_unicode(match : list[int]):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--secret-word', default=None, type=validate_word)
+    parser.add_argument('--port', default=constants.PORT, help='port to use for IPC')
     args = parser.parse_args()
+    ipc.set_port(args.port)
     if args.secret_word == None:
         secret_word = random.choice(database)
     else:
         secret_word = args.secret_word
+    
     console_reader = threading.Thread(group=None, target=user_input_thread)
     console_reader.daemon = True
     console_reader.start()
+
     ipc_reader = threading.Thread(group=None, target=ipc_input_thread)
     ipc_reader.daemon = True
     ipc_reader.start()
+
     guess_history = []
+
     while [constants.FULL_MATCH] * 5 not in guess_history:
         msg = input_queue.get()
+
         if isinstance(msg, BaseException):
             raise msg
+
         elif isinstance(msg, TermInput):
             guess = msg.input
+
         elif isinstance(msg, IPCInput):
             if msg.input == "LIST":
                 it = iter(guess_history)
@@ -101,19 +110,24 @@ def main():
             elif len(msg.input) != 5 or not msg.input.isupper():
                 ipc.err()
             guess = msg.input
+
         else:
             raise TypeError()
+
         if guess not in database:
             print("Invalid guess.")
             continue
+
         match = get_match_info(guess, secret_word)
         won = match == [constants.FULL_MATCH] * 5
         print(guess + "\n" + match_to_unicode(match) + "\n")
+
         if isinstance(msg, IPCInput):
             ipc_out_queue.put(IPCOutput("OK", False) if not won else IPCOutput("CASTIGAT", True))
             if won:
                 while ipc_reader.is_alive():
                     pass # let IPC finish before exiting
+                
         guess_history.append(guess)
         guess_history.append(match)
 
