@@ -16,6 +16,12 @@ With [solver.py](solver.py), you can see how the computer takes "the best" appro
 
 <br>
 
+### Statistics:
+- [Solutions for every word in the database](solutii.txt)
+- Avg. number of guesses: 4.273005063733193
+
+<br>
+
 ### References:
 - [Wordle Game - NY Times](https://www.nytimes.com/games/wordle/index.html)
 - [Solving Wordle using information theory - 3Blue1Brown](https://www.youtube.com/watch?v=v68zYyaEmEA)
