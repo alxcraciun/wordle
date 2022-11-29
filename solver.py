@@ -110,7 +110,7 @@ def calculate_best_guess(prev_info : list[MatchInfo], hard_mode = False):
     for i in range(len(db)):
         entropy_values[i] = calculate_entropy(db[i], prev_info)
         if not(i%1000):
-            print(f"{(i+1)/len(db) * 100}%", flush=True)
+            print(f"{round((i+1)/len(db) * 100, 2)}%", flush=True)
     return sorted(zip(entropy_values, db), reverse=True)[0][1]
 
 def parse_prev_data(msg):
