@@ -1,5 +1,5 @@
-import random, sys, queue, argparse, dataclasses, threading, constants, ipc, os
-import gui
+import random, sys, queue, argparse, dataclasses, threading, os
+import gui, ipc, constants  # Internal Files
 
 database = []
 
