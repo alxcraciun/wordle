@@ -5,14 +5,15 @@ import time
 import constants
 import signal
 import os
+import argparse
 
 lines = queue.Queue()
 total_written = 0
 
-def writer_thread():
+def writer_thread(file):
     global total_written
     cnt = 0
-    with open("solutii.txt", "a") as solutii:
+    with open(file, "a") as solutii:
         while True:
             l = lines.get()
             total_written += 1
@@ -41,13 +42,25 @@ def compute(db, port):
         if len(line) > 7:
             print(f"Word {db[i]} took over 6 tries")
         lines.put(line)
+    print("Thread exiting,", threading.get_ident())
         
 def main():
-    maxt = 5
-    threading.Thread(group=None, target=writer_thread, daemon=True).start()
+    global total_written
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file")
+    parser.add_argument("--amount", default=-1, type=int, help="amount of words to process")
+    parser.add_argument("--processes", default=10, type=int, help="how many processes should be used")
+    args = parser.parse_args()
+    maxt = args.processes
+    threading.Thread(group=None, target=writer_thread, daemon=True, args=[args.file]).start()
     prevr = 0
     db = open("cuvinte_wordle.txt").read().split()
-    already_done = [ln.split()[0] for ln in open("solutii.txt").readlines()]
+    if args.amount != -1:
+        db = db[:args.amount]
+    full_len = len(db)
+    already_done = [ln.split()[0] for ln in open(args.file).readlines()]
+    total_written += len(already_done)
     db = [x for x in db if x not in already_done]
     work : list[threading.Thread] = []
     for i in range(maxt):
@@ -62,8 +75,15 @@ def main():
 
     while work:
         time.sleep(1)
-        print(total_written/len(db)*100,'%')
+        print(total_written/full_len*100,'%')
         work = [t for t in work if t.is_alive()]
+    file = None
+    with open(args.file) as f:
+        file = f.readlines()
+    file = sorted(file)
+    with open(args.file, "w") as f:
+        for line in file:
+            print(line.strip(), file=f)
 
 if __name__ == "__main__":
     main()
