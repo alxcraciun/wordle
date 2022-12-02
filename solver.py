@@ -1,4 +1,4 @@
-import os, sys, constants, math, functools, dataclasses, argparse, ipc
+import os, sys, constants, math, functools, dataclasses, argparse, ipc, threading, time, multiprocessing, multiprocessing.connection
 
 database = []
 
@@ -157,13 +157,35 @@ def wait_for_command():
     #TODO: wait for GUI request on PORT + 1
     pass
 
+def gen_caches():
+    max_proc = 10
+    work : list[multiprocessing.Process] = []
+    files_in_threads : list = []
+    for word in database:
+        mtc = get_match_info(constants.OPENER, word)
+        p = w2_path(mtc)
+        if not (os.path.exists(p) or p in files_in_threads):
+            files_in_threads.append(p)
+            print(f"Calculating cache {p} using word {word}.")
+            work.append(multiprocessing.Process(group=None, target=calculate_best_guess, args=[mtc]))
+            work[-1].start() # fork
+            if len(work) >= max_proc:
+                print("Max limit reached...")
+                multiprocessing.connection.wait([p.sentinel for p in work])
+                work = [p for p in work if p.is_alive()]
+                print("Making more processes...")
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--openers', action='store_true', help='calculate entropies for all possible openers')
+    parser.add_argument("--w2-cache", action="store_true", help="precalculate second guess cache")
     parser.add_argument('--port', default=constants.PORT, help='port to use for IPC')
     args = parser.parse_args()
     if args.openers:
         calculate_opener()
+        return
+    if args.w2_cache:
+        gen_caches()
         return
     ipc.set_port(args.port)
     while True:
