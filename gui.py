@@ -1,5 +1,6 @@
 from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, StringVar, Label
+import queue
 import constants
 import os
 
@@ -117,9 +118,6 @@ def collect_guess():
         word += e.get()
     return word
 
-def give_globals(callback):
-    return lambda : callback(globals())
-
 def update_history(match_info):
     default_history.destroy()
     i = iter(match_info)
@@ -153,12 +151,11 @@ def update_history(match_info):
 def voidfunc(*args, **kwargs):
     pass
 
-def start_window(callback_hint = voidfunc, callback_submit = voidfunc, callback_solve = voidfunc, callback_init = voidfunc):
+def start_window(callback_hint, callback_submit, callback_solve, mt_msg):
     global window
     global canvas
     global key_label_list
     global submit_button, hint_button, solve_button
-    callback_init(update_history)
     window = Tk()
 
     window.title('Ntropy Wordle')
@@ -171,9 +168,12 @@ def start_window(callback_hint = voidfunc, callback_submit = voidfunc, callback_
     canvas = Canvas(window, bg = "#F1F1F1", height = 600, width = 900, bd = 0, highlightthickness = 0, relief = "ridge")
     canvas.place(x = 0, y = 0)
 
-    hint_button = init_button(*BUTTON_COORDS[0], relative_to_assets("button_hint.png"), give_globals(callback_hint))
-    submit_button = init_button(*BUTTON_COORDS[1], relative_to_assets("button_submit.png"), give_globals(callback_submit))
-    solve_button = init_button(*BUTTON_COORDS[2], relative_to_assets("button_solve.png"), give_globals(callback_solve))
+    def give_data(callback):
+        return lambda : callback(collect_guess())
+
+    hint_button = init_button(*BUTTON_COORDS[0], relative_to_assets("button_hint.png"), give_data(callback_hint))
+    submit_button = init_button(*BUTTON_COORDS[1], relative_to_assets("button_submit.png"), give_data(callback_submit))
+    solve_button = init_button(*BUTTON_COORDS[2], relative_to_assets("button_solve.png"), give_data(callback_solve))
 
     for i, coords in enumerate(IMAGE_COORDS, start=1):
         lbl = init_image(*coords, relative_to_assets("key_large.png" if i < 8 else "key_medium.png" if i < 17 else "key_small.png"))
@@ -201,6 +201,12 @@ def start_window(callback_hint = voidfunc, callback_submit = voidfunc, callback_
     default_history = Label(window, text="You haven’t submitted a word yet", background="#FFFFFF", foreground="#898A8D", font=("SFProDisplay Regular", 20 * -1))
     default_history.place(x=310.0,y=95.0,width=300,height=23,anchor="nw")
 
+    def receive_update():
+        if not mt_msg.empty():
+            update_history(mt_msg.get())
+        window.after(5, receive_update)
+
+    window.after(5, receive_update)
     window.mainloop()
 
     os._exit(0)

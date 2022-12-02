@@ -58,7 +58,7 @@ def match_to_unicode(match : list[int]):
     return "".join([conv[code] for code in match])
 
 def submit(g):
-    input_queue.put(GUIInput(g["collect_guess"]()))
+    input_queue.put(GUIInput(g))
 
 def hint(g):
     pass
@@ -69,6 +69,7 @@ def solve(g):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--secret-word', default=None, type=validate_word)
+    parser.add_argument('--no-gui', action="store_true")
     parser.add_argument('--port', default=constants.PORT, help='port to use for IPC')
     args = parser.parse_args()
     ipc.set_port(args.port)
@@ -83,15 +84,11 @@ def main():
 
 
     guess_history = []
-    global update_history
-    update_history = None
+    gui_messages = queue.Queue()
 
-    def receive_uh(uh):
-        global update_history
-        update_history = uh
-
-    window = threading.Thread(group=None, target=lambda : gui.start_window(hint, submit, solve, receive_uh))
-    window.start()
+    window = threading.Thread(group=None, target=gui.start_window, args = [hint, submit, solve, gui_messages])
+    if not args.no_gui:
+        window.start()
 
     while [constants.FULL_MATCH] * 5 not in guess_history:
         msg = input_queue.get()
@@ -130,7 +127,7 @@ def main():
 
         guess_history.append(guess)
         guess_history.append(match)
-        update_history(guess_history)
+        gui_messages.put(guess_history)
 
 if __name__ == "__main__":
     main()
