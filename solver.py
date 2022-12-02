@@ -97,12 +97,39 @@ def calculate_opener():
         for val in sorted(zip(entropy_values, database), reverse=True):
             print(f"{val[1]} -> {val[0]}", file=file)
 
-def calculate_best_guess(prev_info : list[MatchInfo], hard_mode = False):
+def w2_word(m : list[MatchInfo]):
+    return ''.join(m.char for m in m)
+
+def w2_path(m : list[MatchInfo]):
+    return os.path.join("w2_cache", ''.join(str(m.code) for m in m))
+
+def load_w2_cache(match : list[MatchInfo]):
+    try:
+        with open(w2_path(match)) as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return None
+
+def save_w2_cache(match : list[MatchInfo], word : str):
+    os.makedirs("w2_cache", exist_ok=True)
+    try:
+        with open(w2_path(match), "x") as f:
+            f.write(word)
+    except FileExistsError:
+        pass
+
+def calculate_best_guess(prev_info : list[MatchInfo], hard_mode = False) -> str:
     if prev_info == []:
         return constants.OPENER
+    elif w2_word(prev_info) == constants.OPENER:
+        r = load_w2_cache(prev_info)
+        if r:
+            return r
     db = database
     possible = list(get_match_space(prev_info))
     if len(possible) == 1:
+        if w2_word(prev_info) == constants.OPENER:
+            save_w2_cache(prev_info, possible[0])
         return possible[0]
     if hard_mode:
         db = possible
@@ -111,7 +138,10 @@ def calculate_best_guess(prev_info : list[MatchInfo], hard_mode = False):
         entropy_values[i] = calculate_entropy(db[i], prev_info)
         if not(i%1000):
             print(f"{round((i+1)/len(db) * 100, 2)}%", flush=True)
-    return sorted(zip(entropy_values, db), reverse=True)[0][1]
+    best = sorted(zip(entropy_values, db), reverse=True)[0][1]
+    if w2_word(prev_info) == constants.OPENER:
+        save_w2_cache(prev_info, best)
+    return best
 
 def parse_prev_data(msg):
     try:
