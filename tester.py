@@ -69,7 +69,8 @@ def main():
     parser.add_argument("--processes", default=10, type=int, help="how many processes should be used")
     args = parser.parse_args()
     maxt = args.processes
-    threading.Thread(group=None, target=writer_thread, daemon=True, args=[args.file]).start()
+    writer = threading.Thread(group=None, target=writer_thread, args=[args.file])
+    writer.start()
     db = open("cuvinte_wordle.txt").read().split()
     if args.amount != -1:
         db = db[:args.amount]
@@ -91,6 +92,8 @@ def main():
         time.sleep(1)
         print(total_written/full_len*100,'%')
         work = [t for t in work if t.is_alive()]
+    lines.put([-1])
+    writer.join()
     file = None
     with open(args.file) as f:
         file = f.readlines()
